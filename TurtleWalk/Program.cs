@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 
 var t = new TurtleWalk();
 
-
 var visualizer = new TurtleWalkVisualizer<Argb32>(new Vector2(2560, 1440), Color.White);
 
 t.Walk(new() { Base = 10, WalkSequence = new SpigotPi() { Count = 10_000 } },
@@ -74,25 +73,13 @@ public class SpigotPi : IWalkSequence
 
     public IEnumerator<(float value, Turtle.PenState penState)> GetEnumerator()
     {
-        int l = (10 * Count / 3) + 1;
-        var A = new List<int>(l);
-        A.AddRange(Two(l));
-
 
         for (int i = 1; i <= Count; i++)
         {
             yield return (Spigot(i), Turtle.PenState.Down);
         }
-            
-        IEnumerable<int> Two(int count) 
-        {
-            for (int i = 0; i < count; i++)
-            {
-                yield return 2;
-            }
-        }
-    
-        uint Spigot(int digit) 
+    }
+    uint Spigot(int digit) 
         {
             if (this.x == null) 
             {
@@ -136,8 +123,6 @@ public class SpigotPi : IWalkSequence
             prevDigit = digit;
             return pDigit;
         }
-    
-    }
 
     IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();
