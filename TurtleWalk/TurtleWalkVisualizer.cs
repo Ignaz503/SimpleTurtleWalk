@@ -23,8 +23,6 @@ public class TurtleWalkVisualizer<TPixel> where TPixel : unmanaged, IPixel<TPixe
         var extendsWithoutBorder =  unscaledExtends * pixelPerUnit;
         var extends= extendsWithoutBorder + 2f * borderInPixel;
 
-
-
         image = new Image<TPixel>(CeilToInt(extends.X), CeilToInt(extends.Y), bgColor.ToPixel<TPixel>());
 
         var origin = borderInPixel;
