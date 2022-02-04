@@ -4,6 +4,7 @@ using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Drawing.Processing;
 using System.Numerics;
+using SixLabors.ImageSharp.Formats.Gif;
 
 namespace TurtleWalks;
 
@@ -17,29 +18,76 @@ public class TurtleWalkVisualizer<TPixel> where TPixel : unmanaged, IPixel<TPixe
         image = new Image<TPixel>(RoundToInt(size.X), RoundToInt(size.Y),bgColor.ToPixel<TPixel>());
     }
 
-    public TurtleWalkVisualizer(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, Color lineColor, float lineThickness,float pixelPerUnit) 
+    public TurtleWalkVisualizer()
+    {
+        image = new Image<TPixel>(1, 1);
+    }
+
+    void SetupImage(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, float pixelPerUnit) 
     {
         var unscaledExtends = (results.Max - results.Min);
-        var extendsWithoutBorder =  unscaledExtends * pixelPerUnit;
-        var extends= extendsWithoutBorder + 2f * borderInPixel;
+        var extendsWithoutBorder = unscaledExtends * pixelPerUnit;
+        var extends = extendsWithoutBorder + 2f * borderInPixel;
 
         image = new Image<TPixel>(CeilToInt(extends.X), CeilToInt(extends.Y), bgColor.ToPixel<TPixel>());
+    }
 
+    public void Visualize(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, Color lineColor, float lineThickness,float pixelPerUnit) 
+    {
+        SetupImage(results, borderInPixel, bgColor,pixelPerUnit);
+        var unscaledExtends = (results.Max - results.Min);
         var origin = borderInPixel;
 
         for (int i = 0; i < results.Count-1; i++)
         {
             var start = results[i];
             var end = results[i + 1];
-
-            start.X = Map(start.X, results.Min.X, results.Max.X, 0, unscaledExtends.X);
-            start.Y = Map(start.Y, results.Min.Y, results.Max.Y, 0, unscaledExtends.Y);
-
-            end.X = Map(end.X, results.Min.X, results.Max.X, 0, unscaledExtends.X);
-            end.Y = Map(end.Y, results.Min.Y, results.Max.Y, 0, unscaledExtends.Y);
-
-            DrawLine(start, end, lineColor, lineThickness, pixelPerUnit, origin);
+            DrawLine(start,end,lineColor,lineThickness,pixelPerUnit,origin,results.Min,results.Max,unscaledExtends);
         }
+    }
+
+    public Image<TPixel> VisualizeAsGif(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, Color lineColor, float lineThickness, float pixelPerUnit, GifDrawInfo drawInfo) 
+    {
+        SetupImage(results, borderInPixel, bgColor, pixelPerUnit);
+        var gif = new Image<TPixel>(image.Width, image.Height);
+
+        var unscaledExtends = (results.Max - results.Min);
+        var origin = borderInPixel;
+
+        int count = 0;
+        int marker = results.Count / drawInfo.NumberOfFrames;
+
+        for (int i = 0; i < results.Count - 1; i++)
+        {
+            var start = results[i];
+            var end = results[i + 1];
+            DrawLine(start, end, lineColor, lineThickness, pixelPerUnit, origin, results.Min, results.Max, unscaledExtends);
+
+            if (i % marker == 0) 
+            {
+                var copy = image.Frames.CloneFrame(0);
+                copy.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = drawInfo.FrameDelayMilliseconds;
+                gif.Frames.InsertFrame(count, copy.Frames.RootFrame);
+                Console.WriteLine($"Adding Gif frame: {count++} from actual draw result {i}");
+            }
+
+        }
+        image.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = drawInfo.LastFrameDealayMilliseconds;
+        gif.Frames.InsertFrame(count, image.Frames.RootFrame);
+        gif.Metadata.GetFormatMetadata(GifFormat.Instance).RepeatCount = 0;
+        return gif;
+    }
+
+    void DrawLine(Vector2 start, Vector2 end, Color c, float thickness, float pixelPerUnit, Vector2 origin, Vector2 min, Vector2 max, Vector2 extends) 
+    {
+
+        start.X = Map(start.X, min.X, max.X, 0, extends.X);
+        start.Y = Map(start.Y, min.Y, max.Y, 0, extends.Y);
+
+        end.X = Map(end.X, min.X, max.X, 0, extends.X);
+        end.Y = Map(end.Y, min.Y, max.Y, 0, extends.Y);
+
+        DrawLine(start, end, c, thickness, pixelPerUnit, origin);
     }
 
     void DrawLine(Vector2 start, Vector2 end, Color c, float thickness, float pixelPerUnit, Vector2 origin) 
