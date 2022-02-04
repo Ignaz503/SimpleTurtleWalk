@@ -37,6 +37,14 @@ public class TurtleWalk
 
     public void Walk(WalkInfo info, Action<ulong,Step> report)
     {
+        foreach (var step in Walk(info)) 
+        {
+            report(step.stepCount, step.value);
+        }
+    }
+
+    public IEnumerable<(ulong stepCount,Step value)> Walk(WalkInfo info) 
+    {
         var rotStepSize = (360f / info.Base);
         ulong i = 0;
 
@@ -58,7 +66,7 @@ public class TurtleWalk
             if (turtle.Pen == Turtle.PenState.Up)
                 continue;
 
-            report(i, new Step() { PreviousPosition = old, CurrentPosition = turtle.Position });
+            yield return (i, new Step() { PreviousPosition = old, CurrentPosition = turtle.Position });
         }
     }
 
