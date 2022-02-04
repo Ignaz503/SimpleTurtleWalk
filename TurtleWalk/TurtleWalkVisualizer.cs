@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Drawing.Processing;
 using System.Numerics;
 using SixLabors.ImageSharp.Formats.Gif;
+using System.Runtime.CompilerServices;
 
 namespace TurtleWalks;
 
@@ -23,13 +24,17 @@ public class TurtleWalkVisualizer<TPixel> where TPixel : unmanaged, IPixel<TPixe
         image = new Image<TPixel>(1, 1);
     }
 
-    void SetupImage(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, float pixelPerUnit) 
+    Image<TPixel> CreateImageForWalk(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, float pixelPerUnit)
     {
         var unscaledExtends = (results.Max - results.Min);
         var extendsWithoutBorder = unscaledExtends * pixelPerUnit;
         var extends = extendsWithoutBorder + 2f * borderInPixel;
+        return new Image<TPixel>(CeilToInt(extends.X), CeilToInt(extends.Y), bgColor.ToPixel<TPixel>());
+    }
 
-        image = new Image<TPixel>(CeilToInt(extends.X), CeilToInt(extends.Y), bgColor.ToPixel<TPixel>());
+    void SetupImage(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, float pixelPerUnit) 
+    {
+        image = CreateImageForWalk(results, borderInPixel, bgColor,pixelPerUnit);
     }
 
     public void Visualize(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, Color lineColor, float lineThickness,float pixelPerUnit) 
@@ -71,6 +76,56 @@ public class TurtleWalkVisualizer<TPixel> where TPixel : unmanaged, IPixel<TPixe
                 Console.WriteLine($"Adding Gif frame: {count++} from actual draw result {i}");
             }
 
+        }
+        image.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = drawInfo.LastFrameDealayMilliseconds;
+        gif.Frames.InsertFrame(count, image.Frames.RootFrame);
+        gif.Metadata.GetFormatMetadata(GifFormat.Instance).RepeatCount = 0;
+        return gif;
+    }
+
+    public Image<TPixel> VisualizeTrailedWalk(TurtleWalkResult results, Vector2 borderInPixel, Color bgColor, Color lineColor, float lineThickness, float pixelPerUnit, GifDrawInfo drawInfo, int trailCount)
+    {
+        
+        image = CreateImageForWalk(results, borderInPixel, bgColor, pixelPerUnit);
+        var gif = new Image<TPixel>(image.Width, image.Height);
+
+        var unscaledExtends = (results.Max - results.Min);
+        var origin = borderInPixel;
+
+        int count = 0;
+        for (int i = 0; i < results.Count - 1; i++)
+        {
+            var drawOver = i - trailCount;
+            if (drawOver >= 0) 
+            {
+                var startErase = results[drawOver];
+                var enderase = results[drawOver + 1];
+                bool drawLine = true;
+                for (int j = drawOver + 1; j <= i; j++) 
+                {
+                    var compareStart = results[j];
+                    var compareEnd = results[j + 1];
+
+                    if(AlmostEquals((compareStart - startErase).LengthSquared(),0f) && AlmostEquals((compareEnd - enderase).LengthSquared(), 0f))
+                        drawLine = false;
+                    if (AlmostEquals((compareStart - enderase).LengthSquared(), 0f) && AlmostEquals((compareEnd - startErase).LengthSquared(), 0f))
+                        drawLine = false;                 
+                }
+
+                if(drawLine)
+                    DrawLine(startErase, enderase, bgColor, lineThickness, pixelPerUnit, origin, results.Min, results.Max, unscaledExtends);
+            }
+
+            var start = results[i];
+            var end = results[i + 1];
+            DrawLine(start, end, lineColor, lineThickness, pixelPerUnit, origin, results.Min, results.Max, unscaledExtends);
+
+            var copy = image.Frames.CloneFrame(0);
+            copy.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = drawInfo.FrameDelayMilliseconds;
+            gif.Frames.InsertFrame(count, copy.Frames.RootFrame);
+            Console.WriteLine($"Adding Gif frame: {count} from actual draw result {i}");
+            count++;
+            
         }
         image.Frames.RootFrame.Metadata.GetFormatMetadata(GifFormat.Instance).FrameDelay = drawInfo.LastFrameDealayMilliseconds;
         gif.Frames.InsertFrame(count, image.Frames.RootFrame);
@@ -120,5 +175,11 @@ public class TurtleWalkVisualizer<TPixel> where TPixel : unmanaged, IPixel<TPixe
     public static float Map(float x, float inMin, float inMax, float outMin, float outMax)
     {
         return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool AlmostEquals(float value1, float value2, float epsilon = 0.0000001f)
+    {
+        return Math.Abs(value1 - value2) < epsilon;
     }
 }
