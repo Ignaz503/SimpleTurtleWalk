@@ -60,7 +60,7 @@ public class TurtleWalkVisualizer<TPixel> where TPixel : unmanaged, IPixel<TPixe
         var origin = borderInPixel;
 
         int count = 0;
-        int marker = results.Count / drawInfo.NumberOfFrames;
+        int marker = (int)Math.Round((double)results.Count / (double)drawInfo.NumberOfFrames);
 
         for (int i = 0; i < results.Count - 1; i++)
         {

@@ -8,7 +8,7 @@ WalkInfo walkInfo = new() { Base = 4, WalkSequence = new EnumerableSqrt() { Coun
 
 //DrawDuringWalk("spigot.png",walkInfo, new Vector2(2560, 1440),new DrawInfo() { PixelPerUnit = 5f});
 //DrawAfterWalk("spigotAfter.png",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f });
-MakeGif("sqrt.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, new GifDrawInfo() { FrameDelayMilliseconds = 16, NumberOfFrames = 60, LastFrameDealayMilliseconds = 100});
+MakeGif("sqrt.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, new GifDrawInfo() { FrameDelayMilliseconds = 16, NumberOfFrames = 300, LastFrameDealayMilliseconds = 100});
 //MakeGifTrail("sqrtTrail.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, new GifDrawInfo() { FrameDelayMilliseconds = 1, NumberOfFrames = 0/*is ignored*/, LastFrameDealayMilliseconds = 100},7);
 
 Console.WriteLine("Done");
