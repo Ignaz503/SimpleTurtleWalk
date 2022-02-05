@@ -4,12 +4,24 @@ using SixLabors.ImageSharp.PixelFormats;
 using System.Collections;
 using SixLabors.ImageSharp;
 
-WalkInfo walkInfo = new() { Base = 4, WalkSequence = new EnumerableSqrt() { Count = 10_000, Value = 2 } };
-
+//WalkInfo walkInfo = new() { Base = 6, WalkSequence = new EnumerableSqrt() { Count = 10_000, Value = 2 } };
+WalkInfo walkInfo = new() {
+    Base = 4,
+    WalkSequence = 
+        new EnumerableSqrt() {
+            Value = 5,
+            Count = 10_000
+     } };
+var gifInfo = new GifDrawInfo() { 
+    FrameDelayMilliseconds = 16,
+    NumberOfFrames = 60,
+    LastFrameDealayMilliseconds = 300 };
 //DrawDuringWalk("spigot.png",walkInfo, new Vector2(2560, 1440),new DrawInfo() { PixelPerUnit = 5f});
 //DrawAfterWalk("spigotAfter.png",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f });
-MakeGif("sqrt.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, new GifDrawInfo() { FrameDelayMilliseconds = 16, NumberOfFrames = 300, LastFrameDealayMilliseconds = 100});
+MakeGif("random.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, gifInfo);
 //MakeGifTrail("sqrtTrail.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, new GifDrawInfo() { FrameDelayMilliseconds = 1, NumberOfFrames = 0/*is ignored*/, LastFrameDealayMilliseconds = 100},7);
+
+
 
 Console.WriteLine("Done");
 Console.ReadKey();

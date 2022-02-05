@@ -102,5 +102,3 @@ public class EnumerableSqrt : IWalkSequence
     IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();
 }
-
-
