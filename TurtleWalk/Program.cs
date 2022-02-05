@@ -1,43 +1,46 @@
 ﻿using TurtleWalks;
 using System.Numerics;
 using SixLabors.ImageSharp.PixelFormats;
-using System.Collections;
 using SixLabors.ImageSharp;
 
-//WalkInfo walkInfo = new() { Base = 6, WalkSequence = new EnumerableSqrt() { Count = 10_000, Value = 2 } };
-WalkInfo walkInfo = new() {
-    Base = 4,
-    WalkSequence = 
-        new EnumerableSqrt() {
-            Value = 5,
-            Count = 10_000
-     } };
-var gifInfo = new GifDrawInfo() { 
-    FrameDelayMilliseconds = 16,
-    NumberOfFrames = 60,
-    LastFrameDealayMilliseconds = 300 };
-//DrawDuringWalk("spigot.png",walkInfo, new Vector2(2560, 1440),new DrawInfo() { PixelPerUnit = 5f});
-//DrawAfterWalk("spigotAfter.png",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f });
-MakeGif("random.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, gifInfo);
-//MakeGifTrail("sqrtTrail.gif",walkInfo, Vector2.One * 30,new DrawInfo() { PixelPerUnit = 5f }, new GifDrawInfo() { FrameDelayMilliseconds = 1, NumberOfFrames = 0/*is ignored*/, LastFrameDealayMilliseconds = 100},7);
 
+const float PxPerUnit = 50f;
+const int NumSequenceSteps = 1000;
+const int Base = 10;
+const string Directory = "Walk";
+Vector2 Border = Vector2.One * 30;
+//WalkInfo walkInfo = new() { Base = 6, WalkSequence = new EnumerableSqrt() { Count = 10_000, Value = 2 } };
+
+Divide1To10ByAllNumbers(1000);
 
 
 Console.WriteLine("Done");
 Console.ReadKey();
+
+
 
 void DrawAfterWalk(string name, WalkInfo walkInfo,Vector2 borderInPixel, DrawInfo drawInfo) 
 {
     var t = new TurtleWalk();
 
     var res = t.Walk(walkInfo,
-        (i) => Console.WriteLine($"Step Draw After: {i}"));
+        (i) => { });
 
+    if (res.Count <= 3) 
+    {
+        Console.WriteLine($"too short not drawing {res.Count}");
+        return;
+    }
+    Console.WriteLine($"Drawing walk of lenght {res.Count}");
     var visualizer = new TurtleWalkVisualizer<Argb32>();
     visualizer.Visualize(res,borderInPixel, drawInfo.ImgaeBGColor,drawInfo.LineColor,drawInfo.LineThickness,drawInfo.PixelPerUnit);
     
     var path = MakePath(name);
     visualizer.Save(path);
+
+    visualizer = null;
+    res = null;
+    GC.Collect();
 
     Console.WriteLine($"saved at: {path}");
 }
@@ -92,20 +95,35 @@ void DrawDuringWalk(string name,WalkInfo walkInfo,Vector2 imageSize, DrawInfo dr
     Console.WriteLine($"saved at: {path}");
 }
 
-
-static string MakePath(string fileName)
-    => $@"{Environment.CurrentDirectory}\{fileName}";
-
-
-public class GoldenRatio : IWalkSequence
+void DivisionEnumeration(int DivisorStart,int DivisorEnd, int Divisor) 
 {
-    public int Count { get; init; }
-
-    public IEnumerator<(float value, Turtle.PenState penState)> GetEnumerator()
+    WalkInfo info = new()
     {
-        throw new NotImplementedException();
+        Base = Base,
+    };
+    DrawInfo drawInfo = new() { ImgaeBGColor = Color.Black, LineColor = Color.White, LineThickness = 1f, PixelPerUnit = PxPerUnit };
+
+    for (int i = DivisorStart; i <= DivisorEnd; i++)
+    {
+        info.WalkSequence = new EnumerableDivision() { Count = NumSequenceSteps, Divident = i, Divisor = Divisor };
+        DrawAfterWalk($"{i}over{Divisor}.png",info,Border,drawInfo);   
     }
 
-    IEnumerator IEnumerable.GetEnumerator()
-        => GetEnumerator();
+}
+
+void Divide1To10ByAllNumbers(int num) 
+{
+    for (int i = 1; i <= num; i++)
+    {
+        DivisionEnumeration(1, 10, i);
+    }
+}
+
+
+static string MakePath(string fileName)
+{
+    if(!System.IO.Directory.Exists($@"{Environment.CurrentDirectory}\{Directory}"))
+        System.IO.Directory.CreateDirectory($@"{Environment.CurrentDirectory}\{Directory}");
+
+    return $@"{Environment.CurrentDirectory}\{Directory}\{fileName}";
 }
